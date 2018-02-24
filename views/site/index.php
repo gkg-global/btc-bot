@@ -7,9 +7,12 @@ $this->title = 'BTC Bot';
 <div class="site-index">
 
     <div class="jumbotron">
+
         <h1>Hi there! I'm BTC bot!</h1>
 
         <p class="lead">Your personal assistant.</p>
+
+        <img src="https://myfin.by/images/cryptoCurrency/btc.png" height="100px">
 
     </div>
 
