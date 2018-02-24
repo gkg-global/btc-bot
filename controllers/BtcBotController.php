@@ -53,7 +53,8 @@ class BtcBotController extends Controller
 
     public function actionIndex()
     {
-        return $this->render('index');
+        echo "Hi, I'm BTC bot";
+        //return $this->render('index');
     }
 
     public function actionTest() {
