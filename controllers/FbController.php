@@ -67,8 +67,8 @@ class FbController extends Controller
 
         echo 'Test is ok';
 
-        $fp = fopen('/var/www/btc-bot/messages.log', 'a');
-        fwrite($fp, '444' . "\n");
+        //$fp = fopen('/var/www/btc-bot/messages.log', 'a');
+        //fwrite($fp, '444' . "\n");
 
     }
 
