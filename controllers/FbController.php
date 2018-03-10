@@ -2,13 +2,13 @@
 
 namespace app\controllers;
 
+use app\models\FbHelper;
 use pimax\FbBotApp;
 use pimax\Messages\Message;
 use Yii;
 use yii\filters\AccessControl;
 use yii\web\Controller;
-use yii\web\Response;
-use yii\filters\VerbFilter;
+
 
 class FbController extends Controller
 {
@@ -67,9 +67,6 @@ class FbController extends Controller
 
         echo 'Test is ok';
 
-        //$fp = fopen('/var/www/btc-bot/messages.log', 'a');
-        //fwrite($fp, '444' . "\n");
-
     }
 
     public function actionBot() {
@@ -83,6 +80,7 @@ class FbController extends Controller
             echo $_REQUEST['hub_challenge'];
         } else {
 
+            //get request
             $data = json_decode(Yii::$app->request->getRawBody(), true);
             //$data = json_decode(file_get_contents('php://input'), true);
             //print_r($get);
@@ -97,9 +95,39 @@ class FbController extends Controller
                     if ($message['sender']['id'] && $message['message']['text']) {
 
                         $bot = new FbBotApp($token);
-                        $bot->send(new Message($message['sender']['id'], $message['message']['text'] . '_11'));
+
+                        //Delivery status ----------------------
+                        if (!empty($message['delivery'])) {
+                            continue;
+                        }
+
+                        // When bot receive button click from user
+                    } else if (!empty($message['postback'])) {
+                            $text = "Postback received: ".trim($message['postback']['payload']);
+                            $bot->send(new Message($message['sender']['id'], $text));
+                            continue;
+                    }
+
+                    //Command types ----------------------
+
+                    $command = "";
+
+                    if (!empty($message['message'])) {
+
+                        $command = $message['message']['text'];
+
+                    } else if (!empty($message['postback'])) {
+
+                        $command = $message['postback']['payload'];
 
                     }
+
+                    //FbHelper usage example
+                    $fb_helper = new FbHelper();
+                    $fb_helper->messageTemplate($message, $bot);
+                    return 1;
+
+                    //Command worker ----------------------
 
                 }
 
