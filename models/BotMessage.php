@@ -14,6 +14,7 @@ class BotMessage extends Model
     public $locale;
     public $created_at;
     public $original_msg;
+    public $returning_id;
 
     public function getMessageById() {
 
@@ -44,7 +45,29 @@ class BotMessage extends Model
 
         $res = $data->queryOne();
 
-        return $res['id'];
+        $this->returning_id = $res['id'];
+
+        return $this->returning_id;
+
+    }
+    public function updateMessageNlpData() {
+
+        $sql = "UPDATE 
+                  bot_messages
+                SET
+                  intent_id   = :intent_id
+                  ,locale     = :locale
+                WHERE 
+                  id          = :id
+                ;
+                ";
+
+        $data = Yii::$app->db->createCommand($sql);
+        $data->bindValue(':intent_id', $this->intent_id);
+        $data->bindValue(':locale', $this->locale);
+        $data->bindValue(':id', $this->returning_id);
+
+        return $data->queryOne();
 
     }
 

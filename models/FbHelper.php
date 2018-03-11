@@ -38,7 +38,7 @@ class FbHelper extends Model
 
         } else if (!empty($message['postback'])) {
 
-            $command = $message['postback']['payload'];
+//////////            $command = $message['postback']['payload'];
 
         }
 
@@ -360,11 +360,12 @@ class FbHelper extends Model
                 break;
             // Other message received
             default:
-                if (!empty($command)) // otherwise "empty message" wont be understood either
-                    $bot->send(new Message($message['sender']['id'], 'Sorry. I don’t understand you.'));
+
+                return false;
+
         }
 
-        return 1;
+        return true;
 
     }
 

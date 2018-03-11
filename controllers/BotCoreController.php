@@ -2,6 +2,7 @@
 
 namespace app\controllers;
 
+use app\models\BotMessage;
 use yii\filters\AccessControl;
 use yii\web\Controller;
 
@@ -47,10 +48,33 @@ class BotCoreController extends Controller
     {
         echo "Hi, I'm BTC bot";
     }
-    public static function processIntent($intent = false) {
+    public static function processMessage($msg = false) {
 
+        // ==============
+        // How it works:
+        // send to Dialogflow processing Controller
+        // receive action / intent ID
+        // send to BotCore Controller
+        // BotCore Controller send to Exchange Controller
+        // receive from Exchange Controller to BotCore controller
+        // receive from BotCore Controller to FbController
+        // send reply to user
+        // ==============
+
+        //NLP msg processing
+        $intent = NlpController::processNLP($msg->message);
+
+        // RESULT
         // $intent->result->fulfillment->speech;
         // $intent->result->action
+
+        // Prepare & Save message
+
+        //UPD message
+        $msg->intent_id = $intent->result->action;
+        $msg->locale = $intent->lang;
+        $msg->updateMessageNlpData();
+
 
         if ($intent->result->action == 'btc_rate') {
             return ['type' => 'text', 'msg' => 'BTC to USD rate now: ' . ExchangeController::getBtcToUsdRate() . ' USD'];
