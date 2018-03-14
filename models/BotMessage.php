@@ -38,12 +38,12 @@ class BotMessage extends Model
                 RETURNING id;
                 ";
 
-        $data = Yii::$app->db->createCommand($sql);
-        $data->bindValue(':sender_id', $this->sender_id);
-        $data->bindValue(':message', $this->message);
-        $data->bindValue(':original_msg', $this->original_msg);
+        $db = Yii::$app->db->createCommand($sql);
+        $db->bindValue(':sender_id', $this->sender_id);
+        $db->bindValue(':message', $this->message);
+        $db->bindValue(':original_msg', $this->original_msg);
 
-        $res = $data->queryOne();
+        $res = $db->queryOne();
 
         $this->returning_id = $res['id'];
 
@@ -62,12 +62,12 @@ class BotMessage extends Model
                 ;
                 ";
 
-        $data = Yii::$app->db->createCommand($sql);
-        $data->bindValue(':intent_id', $this->intent_id);
-        $data->bindValue(':locale', $this->locale);
-        $data->bindValue(':id', $this->returning_id);
+        $db = Yii::$app->db->createCommand($sql);
+        $db->bindValue(':intent_id', $this->intent_id);
+        $db->bindValue(':locale', $this->locale);
+        $db->bindValue(':id', $this->returning_id);
 
-        return $data->queryOne();
+        return $db->queryOne();
 
     }
 
