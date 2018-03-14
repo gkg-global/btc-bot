@@ -2,6 +2,8 @@
 
 namespace app\controllers;
 
+use app\commands\MarketDataController;
+use app\models\MarketData;
 use yii\filters\AccessControl;
 use yii\httpclient\Client;
 use yii\web\Controller;
@@ -50,7 +52,7 @@ class ExchangeController extends Controller
     {
         echo "Hi, I'm BTC bot";
     }
-    public static function getBtcToUsdRate() {
+    public static function getMarketPrice($exchange_id = 'blockchain.info', $market_id = 'BTC_USD') {
 
         $client = new Client();
         $response = $client->createRequest()
@@ -58,9 +60,10 @@ class ExchangeController extends Controller
             ->setUrl('https://blockchain.info/ru/ticker')
             ->send();
         if ($response->isOk) {
+
             return round($response->data['USD']['buy'], 2);
         }
-        
+
     }
 
 

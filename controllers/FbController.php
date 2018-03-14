@@ -5,6 +5,7 @@ namespace app\controllers;
 use app\models\BotMessage;
 use pimax\FbBotApp;
 use pimax\Messages\Message;
+use pimax\Messages\SenderAction;
 use Yii;
 use yii\filters\AccessControl;
 use yii\httpclient\Client;
@@ -134,6 +135,10 @@ class FbController extends Controller
                             continue;
                     }
 
+                    // ============= start ofFb Message processing ====================
+                    // set "typing" status
+                    $bot->send(new SenderAction($message['sender']['id'], SenderAction::ACTION_TYPING_ON));
+
                     // Parse and Save FB message here
                     $msg_parsed = FbController::parseAndSaveMessage($message);
 
@@ -141,9 +146,16 @@ class FbController extends Controller
                     $reply = BotCoreController::processMessage($msg_parsed);
                     // $reply = ['type', 'message']
 
+                    // remove "typing" status
+                    $bot->send(new SenderAction($message['sender']['id'], SenderAction::ACTION_TYPING_OFF));
+
                     // Bot reply to user
                     $bot->send(new Message($message['sender']['id'], $reply['msg']));
-                    
+
+                    // ============= end of Fb Message processing ====================
+
+
+
                 }
 
             }

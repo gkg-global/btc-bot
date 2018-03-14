@@ -77,7 +77,7 @@ class BotCoreController extends Controller
 
 
         if ($intent->result->action == 'btc_rate') {
-            return ['type' => 'text', 'msg' => 'BTC to USD rate now: ' . ExchangeController::getBtcToUsdRate() . ' USD'];
+            return ['type' => 'text', 'msg' => 'BTC to USD rate now: ' . ExchangeController::getMarketPrice() . ' USD'];
         } else {
             return ['type' => 'text', 'msg' => $intent->result->fulfillment->speech];
         }
