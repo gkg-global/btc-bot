@@ -10,6 +10,8 @@ use yii\httpclient\Client;
 class MarketDataController extends Controller
 {
 
+    public static $volatility_thresholds = [1, 3, 5, 10, 20, 30, 40, 50];
+
     public function actionIndex($message = 'hello world') {
 
         echo $message . "\n";
@@ -53,7 +55,7 @@ class MarketDataController extends Controller
         #
 
         $date_summary = MarketData::getDateSummary();
-        
+
         if (!isset($date_summary['max_buy']) || empty($date_summary['max_buy'])) {
 
             // setup max & min number as $data['buy']
@@ -61,27 +63,69 @@ class MarketDataController extends Controller
 
         } else if ($data['buy'] > $date_summary['max_buy']) {
 
+            // update new max buy
             MarketData::updateMaxBuy($data['buy']);
+
+            $prev_volatility = round((100 - ($date_summary['min_buy'] / $date_summary['max_buy'] * 100)), 2);
             $volatility = round((100 - ($date_summary['min_buy'] / $data['buy'] * 100)), 2);
 
-            // 10%
-            if ($volatility >= 1) {
-                //Signal
-                $msg = 'BTC-USD to the moon! (' . $volatility . '%)';
-                $msg = 'BTC-USD to the moon today! From '.$date_summary['min_buy'].' to '.$data['buy'].' (' . $volatility . '%)';
-                BotCoreController::createSignal($msg);
+            foreach (self::$volatility_thresholds as $key => $threshold) {
+
+                // find threshold match
+                if ($threshold <= intval($volatility)) {
+                    continue;
+                }
+                // new volatility threshold thould be higher then previous
+                if ($key != 0 && self::$volatility_thresholds[$key-1] > intval($prev_volatility)) {
+
+                    // create Signal
+                    $msg = 'BTC-USD to the moon! (' . $volatility . '%)';
+                    $msg = 'BTC-USD to the moon today! From '.$date_summary['min_buy'].' to '.$data['buy'].' (' . $volatility . '%)';
+
+                    BotCoreController::createSignal($msg);
+
+                    // stop threshold cycle
+                    break;
+
+                }
+
+                // stop threshold cycle
+                break;
+
             }
+
         } else if ($data['buy'] < $date_summary['min_buy']) {
 
+            // update new min buy
             MarketData::updateMinBuy($data['buy']);
+
+            $prev_volatility = round((100 - ($date_summary['min_buy'] / $date_summary['max_buy'] * 100)), 2);
             $volatility = round((100 - ($data['buy'] / $date_summary['max_buy'] * 100)), 2);
 
-            // 10%
-            if ($volatility >= 1) {
-                //Signal
-                $msg = 'BTC-USD dropped today! From '.$date_summary['max_buy'].' to '.$data['buy'].' (' . $volatility . '%)';
-                BotCoreController::createSignal($msg);
+            foreach (self::$volatility_thresholds as $key => $threshold) {
+
+                // find threshold match
+                if ($threshold <= intval($volatility)) {
+                    continue;
+                }
+                // new volatility threshold thould be higher then previous
+                if ($key != 0 && self::$volatility_thresholds[$key-1] > intval($prev_volatility)) {
+
+                    // create Signal
+                    $msg = 'BTC-USD price dropped! From '.$date_summary['max_buy'].' to '.$data['buy'].' (' . $volatility . '%)';
+
+                    BotCoreController::createSignal($msg);
+
+                    // stop threshold cycle
+                    break;
+
+                }
+
+                // stop threshold cycle
+                break;
+
             }
+
         }
 
         // search for the previous days / weeks / month
