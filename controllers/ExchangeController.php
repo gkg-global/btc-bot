@@ -57,7 +57,7 @@ class ExchangeController extends Controller
         $client = new Client();
         $response = $client->createRequest()
             ->setMethod('GET')
-            ->setUrl('https://blockchain.info/ru/ticker')
+            ->setUrl('https://blockchain.info/en/ticker')
             ->send();
         if ($response->isOk) {
 
