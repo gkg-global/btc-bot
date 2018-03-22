@@ -71,7 +71,7 @@ class FbController extends Controller
         $msg['message']['text'] = 'hi there';
         $msg['sender']['id'] = 1418976508165446;
 
-        $msg_parsed = FbController::parseAndSaveMessage($msg);
+        $msg_parsed = FbController::parseMessage($msg);
         print_r($msg_parsed);
 
         die;
@@ -121,6 +121,8 @@ class FbController extends Controller
 
                 foreach ($data['entry'][0]['messaging'] as $message) {
 
+                    // ToDo process payload: GET_STARTED_PAYLOAD
+
                     if ($message['sender']['id'] && $message['message']['text']) {
 
                         //Delivery status ----------------------
@@ -140,7 +142,7 @@ class FbController extends Controller
                     $bot->send(new SenderAction($message['sender']['id'], SenderAction::ACTION_TYPING_ON));
 
                     // Parse and Save FB message here
-                    $msg_parsed = FbController::parseAndSaveMessage($message);
+                    $msg_parsed = FbController::parseMessage($message);
 
                     //Bot Core message processing
                     $reply = BotCoreController::processMessage($msg_parsed);
@@ -155,7 +157,6 @@ class FbController extends Controller
                     // ============= end of Fb Message processing ====================
 
 
-
                 }
 
             }
@@ -163,7 +164,7 @@ class FbController extends Controller
         }
 
     }
-    public static function parseAndSaveMessage($msg = false) {
+    public static function parseMessage($msg = false) {
 /*
         $msg = "";
 
@@ -178,54 +179,9 @@ class FbController extends Controller
         $model->sender_id       = $msg['sender']['id'];
         $model->original_msg    = json_encode($msg);
 
-        $model->saveMessage();
-
         return $model;
 
     }
-    public function processNLP($intent = 'btc rate') {
-
-        $postData = array('query' => array($intent), 'lang' => 'en', 'sessionId' => '12345');
-        $jsonData = json_encode($postData);
-        $v = date('Ymd');
-
-        $ch = curl_init('https://api.api.ai/v1/query?v='.$v);
-        curl_setopt($ch, CURLOPT_POST, 1);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, $jsonData);
-        curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-Type: application/json', 'Authorization: Bearer '.Yii::$app->params['dialogflow_auth_key']));
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        $result = json_decode(curl_exec($ch));
-        //print_r($result->result->fulfillment->speech);
-        curl_close($ch);
-
-        //Terms
-        if ($result->result->action == 'btc_rate') {
-
-            $msg = 'BTC rate for today is: ' . $this->getBtcToUsdRate() . ' USD';
-
-
-            return $msg;
-
-        }
-
-        return $result->result->fulfillment->speech;
-
-    }
-    public function getBtcToUsdRate() {
-
-        //https://blockchain.info/ru/ticker
-
-        $client = new Client();
-        $response = $client->createRequest()
-            ->setMethod('GET')
-            ->setUrl('https://blockchain.info/ru/ticker')
-            ->send();
-        if ($response->isOk) {
-            return round($response->data['USD']['buy'], 2);
-        }
-
-    }
-
     public function actionBotTest() {
 
         $token = Yii::$app->params['fb_page_token'];
@@ -261,7 +217,16 @@ class FbController extends Controller
 
 
     }
+    public static function sendMessage($user_id, $msg) {
 
+        $token = Yii::$app->params['fb_page_token'];
+        $bot = new FbBotApp($token);
+
+        $bot->send(new SenderAction($user_id, SenderAction::ACTION_TYPING_ON));
+        $bot->send(new SenderAction($user_id, SenderAction::ACTION_TYPING_OFF));
+        $bot->send(new Message($user_id, $msg));
+
+    }
 
 
 }
