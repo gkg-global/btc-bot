@@ -3,6 +3,7 @@
 namespace app\controllers;
 
 use app\models\BotMessage;
+use app\models\BotToUserMessage;
 use yii\filters\AccessControl;
 use yii\web\Controller;
 
@@ -52,14 +53,16 @@ class BotCoreController extends Controller
 
         // ==============
         // How it works:
+        // receive message to process
+        // save origin message from client controller
         // send to Dialogflow processing Controller
         // receive action / intent ID
-        // send to BotCore Controller
-        // BotCore Controller send to Exchange Controller
-        // receive from Exchange Controller to BotCore controller
-        // receive from BotCore Controller to FbController
-        // send reply to user
+        // based on intent ID BotCore doing it's stuff via external controllers
+        // send reply back to user via client controller
         // ==============
+
+        //Save original message
+        $msg->saveMessage();
 
         //NLP msg processing
         $intent = NlpController::processNLP($msg->message);
@@ -68,18 +71,49 @@ class BotCoreController extends Controller
         // $intent->result->fulfillment->speech;
         // $intent->result->action
 
-        // Prepare & Save message
-
         //UPD message
         $msg->intent_id = $intent->result->action;
         $msg->locale = $intent->lang;
         $msg->updateMessageNlpData();
 
 
+        $reply = self::processIntent($intent);
+
+        // save reply message
+        $botToUserMsg = new BotToUserMessage();
+        $botToUserMsg->recipient_id = $msg->sender_id;
+        $botToUserMsg->message = $reply['msg'];
+        $botToUserMsg->message_type = 'reply';
+        $botToUserMsg->saveMessage();
+
+        return $reply;
+
+    }
+    public static function createSignal($msg) {
+
+        foreach (self::getSignalSubscribers() as $user_id) {
+
+            FbController::sendMessage($user_id, $msg);
+
+        }
+
+    }
+    public static function getSignalSubscribers() {
+
+        // Pub/Sub
+        return [1418976508165446];
+
+    }
+    public static function processIntent($intent) {
+
         if ($intent->result->action == 'btc_rate') {
+            // BTC market rate
             return ['type' => 'text', 'msg' => 'BTC to USD rate now: ' . ExchangeController::getMarketPrice() . ' USD'];
+
         } else {
+            // Default intent
             return ['type' => 'text', 'msg' => $intent->result->fulfillment->speech];
+
         }
 
     }
