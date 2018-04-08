@@ -89,4 +89,30 @@ class ExchangeController extends Controller
 
     }
 
+    public static function getAddressStatus($address, $exchange_id = 'blockchain.info', $market_id = 'BTC_USD') {
+
+        if ($market_id == 'BTC_USD') {
+
+            // ETH USD
+            $client = new Client();
+            $response = $client->createRequest()
+                ->setMethod('GET')
+                ->setUrl('https://blockchain.info/ru/rawaddr/'.$address.'?limit=0')
+                ->send();
+            if ($response->isOk) {
+
+                $msg    = 'Account address: ' . $response->data['address'] . "\n";
+                $msg   .= 'Number of transactions: ' . $response->data['n_tx'] . "\n";
+                $msg   .= 'Total received: ' . ($response->data['total_received']/100000000) . " BTC\n";
+                $msg   .= 'Total sent: ' . ($response->data['total_sent']/100000000) . " BTC\n";
+                $msg   .= 'Current balance: ' . ($response->data['final_balance']/100000000) . " BTC\n";
+
+                return $msg;
+
+            }
+
+        }
+
+    }
+
 }

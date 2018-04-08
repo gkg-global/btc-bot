@@ -101,8 +101,10 @@ class BotCoreController extends Controller
     }
     public static function getSignalSubscribers() {
 
-        $users = UserProfile::getUsersExternalId();
-        return $users;
+        return [1418976508165446];
+
+        //$users = UserProfile::getUsersExternalId();
+        //return $users;
 
     }
     public static function processIntent($intent) {
@@ -116,8 +118,9 @@ class BotCoreController extends Controller
             return ['type' => 'text', 'msg' => 'ETH to USD rate now: ' . ExchangeController::getMarketPrice('coinmarketcap.com', 'ETH_USD') . ' USD'];
 
         } else if ($intent->result->action == 'account.status' && $intent->result->contexts[0]->name == 'status') {
-            // && $intent->result->contexts[0]->name == 'status'
-            return ['type' => 'text', 'msg' => 'WOW' . $intent->result->contexts[0]->name . '++' .serialize($intent->result->contexts)];
+
+            return ['type' => 'text', 'msg' => ExchangeController::getAddressStatus($intent->result->parameters->any)];
+            //return ['type' => 'text', 'msg' => serialize($intent->result->parameters->any)];
 
         } else {
             // Default intent
