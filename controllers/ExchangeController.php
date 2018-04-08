@@ -54,17 +54,39 @@ class ExchangeController extends Controller
     }
     public static function getMarketPrice($exchange_id = 'blockchain.info', $market_id = 'BTC_USD') {
 
-        $client = new Client();
-        $response = $client->createRequest()
-            ->setMethod('GET')
-            ->setUrl('https://blockchain.info/en/ticker')
-            ->send();
-        if ($response->isOk) {
+        if ($market_id == 'BTC_USD') {
 
-            return round($response->data['USD']['buy'], 2);
+            $client = new Client();
+            $response = $client->createRequest()
+                ->setMethod('GET')
+                ->setUrl('https://blockchain.info/en/ticker')
+                ->send();
+            if ($response->isOk) {
+
+                return round($response->data['USD']['buy'], 2);
+
+            }
+
+        }
+
+        //---
+
+        if ($market_id == 'ETH_USD') {
+
+            // ETH USD
+            $client = new Client();
+            $response = $client->createRequest()
+                ->setMethod('GET')
+                ->setUrl('https://api.coinmarketcap.com/v1/ticker/ethereum/')
+                ->send();
+            if ($response->isOk) {
+
+                return round($response->data[0]['price_usd'], 2);
+
+            }
+
         }
 
     }
-
 
 }

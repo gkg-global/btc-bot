@@ -3,8 +3,12 @@
 namespace app\controllers;
 
 use app\models\BotMessage;
+use app\models\FbHelper;
+use app\models\UserProfile;
 use pimax\FbBotApp;
 use pimax\Messages\Message;
+use pimax\Messages\QuickReply;
+use pimax\Messages\QuickReplyButton;
 use pimax\Messages\SenderAction;
 use Yii;
 use yii\filters\AccessControl;
@@ -120,8 +124,40 @@ class FbController extends Controller
                 $bot = new FbBotApp($token);
 
                 foreach ($data['entry'][0]['messaging'] as $message) {
+//$bot->send(new Message($message['sender']['id'], 'hi there !')); continue;
+                    // Payload processing GET_STARTED_PAYLOAD
 
-                    // ToDo process payload: GET_STARTED_PAYLOAD
+                    if (!empty($message['postback']['payload'])) {
+
+                        if ($message['postback']['payload'] == 'GET_STARTED_PAYLOAD') {
+
+                            $bot->send(new SenderAction($message['sender']['id'], SenderAction::ACTION_TYPING_ON));
+
+                            $userProfile = self::createUserProfile($message['sender']['id']);
+
+                            $bot->send(new SenderAction($message['sender']['id'], SenderAction::ACTION_TYPING_OFF));
+
+                            $text = "Hi ".$userProfile->firstname.", welcome to Bitcoin assistant bot.";
+
+                            $bot->send(new QuickReply($message['sender']['id'], $text,
+                                [
+                                    new QuickReplyButton(QuickReplyButton::TYPE_TEXT, 'What you can do?', 'LIST_OF FEATURES_PAYLOAD'),
+                                    new QuickReplyButton(QuickReplyButton::TYPE_TEXT, 'What is it?', 'WHAT_IS_IT_PAYLOAD'),
+                                    new QuickReplyButton(QuickReplyButton::TYPE_TEXT, 'Start conversation', 'OK_PAYLOAD'),
+                                ]
+                            ));
+
+                            continue;
+
+                        } else {
+
+                            $text = "Postback received: " . trim($message['postback']['payload']);
+                            $bot->send(new Message($message['sender']['id'], $text));
+                            continue;
+
+                        }
+
+                    }
 
                     if ($message['sender']['id'] && $message['message']['text']) {
 
@@ -225,6 +261,36 @@ class FbController extends Controller
         $bot->send(new SenderAction($user_id, SenderAction::ACTION_TYPING_ON));
         $bot->send(new SenderAction($user_id, SenderAction::ACTION_TYPING_OFF));
         $bot->send(new Message($user_id, $msg));
+
+    }
+
+    public static function createUserProfile($user_id) {
+
+        $client = new Client();
+        $response = $client->createRequest()
+            ->setMethod('GET')
+            ->setUrl('https://graph.facebook.com/v2.6/'.$user_id.'?fields=first_name,last_name,profile_pic,locale,timezone,gender,is_payment_enabled,last_ad_referral&access_token='.Yii::$app->params['fb_page_token'])
+            ->send();
+        if ($response->isOk) {
+
+            $userProfileModel = new UserProfile();
+
+            $userProfileModel->external_id      = $response->data['id'];
+            $userProfileModel->firstname        = $response->data['first_name'];
+            $userProfileModel->lastname         = $response->data['last_name'];
+            $userProfileModel->pic              = $response->data['profile_pic'];
+            $userProfileModel->locale           = $response->data['locale'];
+            $userProfileModel->timezone         = $response->data['timezone'];
+            $userProfileModel->gender           = $response->data['gender'];
+            $userProfileModel->params           = array(
+                array('is_payment_enabled' => $response->data['is_payment_enabled']),
+            );
+
+            $userProfileModel->saveProfile();
+
+            return $userProfileModel;
+
+        }
 
     }
 
