@@ -40,7 +40,7 @@ class MarketData extends Model
         return $res;
 
     }
-    public static function getDateSummary($market_id = 'BTC_USD', $date = false) {
+    public static function getDateSummary($exchange_id = 'blockchain.info', $market_id = 'BTC_USD', $date = false) {
 
         if (!$date) {
             $date = date('Y-m-d');
@@ -52,12 +52,14 @@ class MarketData extends Model
                 WHERE
                 date            = :date
                 AND market_id   = :market_id
+                AND exchange_id = :exchange_id
                 ;
                 ";
 
         $db = Yii::$app->db->createCommand($sql);
         $db->bindValue(':date', $date);
         $db->bindValue(':market_id', $market_id);
+        $db->bindValue(':exchange_id', $exchange_id);
 
         $res = $db->queryOne();
 
@@ -148,6 +150,31 @@ class MarketData extends Model
         $db->bindValue(':date', $date);
         $db->bindValue(':market_id', $market_id);
         $db->bindValue(':min_buy', $min_buy);
+
+        $res = $db->queryOne();
+
+        return $res;
+
+    }
+    public static function saveSignalGap($buy_from, $buy_to, $volatility) {
+
+        $sql = "INSERT INTO 
+                  bot_market_data_volatility_gaps
+                (buy_from
+                ,buy_to
+                ,volatility_gap
+                )
+                VALUES 
+                (:buy_from
+                ,:buy_to
+                ,:volatility_gap
+                )
+                ";
+
+        $db = Yii::$app->db->createCommand($sql);
+        $db->bindValue(':buy_from', $buy_from);
+        $db->bindValue(':buy_to', $buy_to);
+        $db->bindValue(':volatility_gap', $volatility);
 
         $res = $db->queryOne();
 

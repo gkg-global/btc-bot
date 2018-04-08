@@ -4,6 +4,7 @@ namespace app\controllers;
 
 use app\models\BotMessage;
 use app\models\BotToUserMessage;
+use app\models\UserProfile;
 use yii\filters\AccessControl;
 use yii\web\Controller;
 
@@ -100,8 +101,8 @@ class BotCoreController extends Controller
     }
     public static function getSignalSubscribers() {
 
-        // Pub/Sub
-        return [1418976508165446];
+        $users = UserProfile::getUsersExternalId();
+        return $users;
 
     }
     public static function processIntent($intent) {
@@ -109,6 +110,14 @@ class BotCoreController extends Controller
         if ($intent->result->action == 'btc_rate') {
             // BTC market rate
             return ['type' => 'text', 'msg' => 'BTC to USD rate now: ' . ExchangeController::getMarketPrice() . ' USD'];
+
+        } else if ($intent->result->action == 'eth_rate') {
+            // BTC market rate
+            return ['type' => 'text', 'msg' => 'ETH to USD rate now: ' . ExchangeController::getMarketPrice('coinmarketcap.com', 'ETH_USD') . ' USD'];
+
+        } else if ($intent->result->action == 'account.status' && $intent->result->contexts[0]->name == 'status') {
+            // && $intent->result->contexts[0]->name == 'status'
+            return ['type' => 'text', 'msg' => 'WOW' . $intent->result->contexts[0]->name . '++' .serialize($intent->result->contexts)];
 
         } else {
             // Default intent

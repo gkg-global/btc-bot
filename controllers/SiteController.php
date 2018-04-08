@@ -2,6 +2,7 @@
 
 namespace app\controllers;
 
+use app\models\UserProfile;
 use Yii;
 use yii\filters\AccessControl;
 use yii\web\Controller;
@@ -67,6 +68,13 @@ class SiteController extends Controller
     public function actionTest() {
 
         echo 'Test is ok';
+
+    }
+    public function actionUsers() {
+
+        $users = UserProfile::getUsers();
+
+        return $this->render('users', array('users' => $users));
 
     }
 }

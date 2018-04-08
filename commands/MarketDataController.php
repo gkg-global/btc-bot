@@ -20,6 +20,7 @@ class MarketDataController extends Controller
 
     public function actionTicker() {
 
+        // BTC USD market monitoring
         $client = new Client();
         $response = $client->createRequest()
             ->setMethod('GET')
@@ -31,8 +32,30 @@ class MarketDataController extends Controller
                 'timestamp'     =>  date('Y-m-d H:i:s')
                 ,'exchange_id'  =>  'blockchain.info'
                 ,'market_id'    =>  'BTC_USD'
-                ,'buy'          =>  round($response->data['USD']['buy'])
-                ,'sell'         =>  round($response->data['USD']['sell'])
+                ,'buy'          =>  round($response->data['USD']['buy'], 2)
+                ,'sell'         =>  round($response->data['USD']['sell'], 2)
+            ];
+
+            MarketData::saveMarketData($data);
+
+            self::actionFluctuationManager($data);
+
+        }
+
+        // ETH USD market monitoring
+        $client = new Client();
+        $response = $client->createRequest()
+            ->setMethod('GET')
+            ->setUrl('https://api.coinmarketcap.com/v1/ticker/ethereum/')
+            ->send();
+        if ($response->isOk) {
+
+            $data = [
+                'timestamp'     =>  date('Y-m-d H:i:s')
+                ,'exchange_id'  =>  'coinmarketcap.com'
+                ,'market_id'    =>  'ETH_USD'
+                ,'buy'          =>  round($response->data[0]['price_usd'], 2)
+                ,'sell'         =>  round($response->data[0]['price_usd'], 2)
             ];
 
             MarketData::saveMarketData($data);
@@ -79,10 +102,14 @@ class MarketDataController extends Controller
                 if ($key != 0 && self::$volatility_thresholds[$key-1] > intval($prev_volatility)) {
 
                     // create Signal
-                    $msg = 'BTC-USD to the moon! (' . $volatility . '%)';
-                    $msg = 'BTC-USD to the moon today! From '.$date_summary['min_buy'].' to '.$data['buy'].' (' . $volatility . '%)';
+                    // ToDo messages Text to config
+                    $msg = $data['market_id'].' to the moon today! From '.$date_summary['min_buy'].' to '.$data['buy'].' (' . $volatility . '%)';
 
+                    // save Signal Data
+                    MarketData::saveSignalGap($date_summary['min_buy'], $data['buy'], $volatility);
+                    // send Signal
                     BotCoreController::createSignal($msg);
+
 
                     // stop threshold cycle
                     break;
@@ -112,8 +139,12 @@ class MarketDataController extends Controller
                 if ($key != 0 && self::$volatility_thresholds[$key-1] > intval($prev_volatility)) {
 
                     // create Signal
-                    $msg = 'BTC-USD price dropped! From '.$date_summary['max_buy'].' to '.$data['buy'].' (' . $volatility . '%)';
+                    // ToDo messages Text to config
+                    $msg = $data['market_id'].' price dropped! From '.$date_summary['max_buy'].' to '.$data['buy'].' (' . $volatility . '%)';
 
+                    // save Signal Data
+                    MarketData::saveSignalGap($date_summary['max_buy'], $data['buy'], $volatility);
+                    // send Signal
                     BotCoreController::createSignal($msg);
 
                     // stop threshold cycle
